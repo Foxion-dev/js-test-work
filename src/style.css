@@ -355,6 +355,7 @@ select {
   -webkit-box-align: center;
       -ms-flex-align: center;
           align-items: center;
+  background-color: #eeeeee;
   background: radial-gradient(ellipse at center, rgba(127, 125, 133, 0.7) 0%, #4a4561 40%, #0a0c27 100%);
   display: none;
 }
@@ -365,7 +366,7 @@ select {
   display: flex;
 }
 
-.preloader .🤚 {
+.preloader__wrap {
   --skin-color: #E4C560;
   --tap-speed: 0.6s;
   --tap-stagger: 0.1s;
@@ -375,7 +376,7 @@ select {
   margin-left: 8vw;
 }
 
-.preloader .🤚:before {
+.preloader__wrap:before {
   content: '';
   display: block;
   width: 180%;
@@ -390,7 +391,7 @@ select {
   opacity: 0.3;
 }
 
-.preloader .🌴 {
+.preloader__palm {
   display: block;
   width: 100%;
   height: 100%;
@@ -401,7 +402,7 @@ select {
   border-radius: 1vw 4vw;
 }
 
-.preloader .👍 {
+.preloader__finger-big {
   position: absolute;
   width: 120%;
   height: 3.2vw;
@@ -417,7 +418,7 @@ select {
   border-left: 2px solid rgba(0, 0, 0, 0.1);
 }
 
-.preloader .👍:after {
+.preloader__finger-big:after {
   width: 20%;
   height: 60%;
   content: '';
@@ -429,7 +430,7 @@ select {
   border-right: 2px solid rgba(0, 0, 0, 0.05);
 }
 
-.preloader .👉 {
+.preloader__finger {
   position: absolute;
   width: 80%;
   height: 3.5vw;
@@ -448,7 +449,7 @@ select {
           transform: rotate(10deg);
 }
 
-.preloader .👉:before {
+.preloader__finger:before {
   content: '';
   position: absolute;
   width: 140%;
@@ -463,7 +464,7 @@ select {
   border-radius: 2vw;
 }
 
-.preloader .👉:nth-child(1) {
+.preloader__finger:nth-child(1) {
   -webkit-animation-delay: 0;
           animation-delay: 0;
   -webkit-filter: brightness(70%);
@@ -472,7 +473,7 @@ select {
           animation-name: tap-upper-1;
 }
 
-.preloader .👉:nth-child(2) {
+.preloader__finger:nth-child(2) {
   -webkit-animation-delay: var(--tap-stagger);
           animation-delay: var(--tap-stagger);
   -webkit-filter: brightness(80%);
@@ -481,7 +482,7 @@ select {
           animation-name: tap-upper-2;
 }
 
-.preloader .👉:nth-child(3) {
+.preloader__finger:nth-child(3) {
   -webkit-animation-delay: calc(var(--tap-stagger) * 2);
           animation-delay: calc(var(--tap-stagger) * 2);
   -webkit-filter: brightness(90%);
@@ -490,7 +491,7 @@ select {
           animation-name: tap-upper-3;
 }
 
-.preloader .👉:nth-child(4) {
+.preloader__finger:nth-child(4) {
   -webkit-animation-delay: calc(var(--tap-stagger) * 3);
           animation-delay: calc(var(--tap-stagger) * 3);
   -webkit-filter: brightness(100%);

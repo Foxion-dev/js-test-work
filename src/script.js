@@ -1,5 +1,8 @@
 document.addEventListener('DOMContentLoaded', function(){ 
 
+
+	/* Обьявим ключи в LocalStorage */
+
 	if(!localStorage.favoritePhotos){
 		localStorage.favoritePhotos = ''
 	}
@@ -10,62 +13,85 @@ document.addEventListener('DOMContentLoaded', function(){
 		localStorage.activeTab = '1'
 	}
 	
-	getActiveContentHTML(localStorage.activeTab)
+	/* Зададим константы запросов */
 
 	const albumUrl  = 'https://json.medrating.org/albums?userId=';
 	const photosUrl = 'https://json.medrating.org/photos?albumId=';
 	const userUrl   = 'https://json.medrating.org/users/';
+
+	/* Зададим константы/переменные DOM  */
+
 	const listHTML = document.getElementById('user-list');
 	const favoriteHTML = document.getElementById('favorite-list');
-
 	const lightBoxModal = document.getElementById('light-box');
 	const closeLightBox = document.querySelector('.close-light-box');
-
 	let tabLinks = document.querySelectorAll('.js-tab-link');
 
-	let albums,photos;
+	/* Объявим нужные в дальнейшем переменные  */
 
+	let albums,photos;
 	let opensAlbum = [];
 	let opensPhotos = [];
 	let favoritePhotos = [];
 
+	/* Получим массив избранных фотографий из LocalStorage при загрузке страницы */
+
 	favoritePhotos = localStorage.favoritePhotos.split('|');
 	favoritePhotos = favoritePhotos.filter((photo) => photo != '');
 
-	let favoritePhotosObjects = getFavoritePhotoData(localStorage.favoritePhotos, localStorage.favoriteAlbums); // делать в момент клика на там избранное
-	let favoriteResolve =  constructHtmlFavorite(favoritePhotosObjects, favoriteHTML);
+	/* Получим контент активного таба  */
 
-	favoriteResolve.then(html => {
-		setTimeout(()=>{
-			addCustomEventsHtmlSelector()
-		},1500)
-	})
+	getActiveContentTab(localStorage.activeTab)
+
+	/* Зададим синхронные обработчики событий  */
 
 	tabLinks.forEach((item,idx) => {
 		
 		item.addEventListener('click', function (e) {
 			e.preventDefault()
-			getActiveContentTab(this)
+			getActiveContentTab(this.getAttribute('data-content-id'))
 		});
+
 	})
 
 	closeLightBox.addEventListener('click', () => {
 		lightBoxModal.classList.remove('open');
 	})
 
+	/*
+	* Функция принимает id активного таба
+	* Получает данные из LocalStorage о фотографиях и альбомах,
+	* Меняет значение активного таба в LocalStorage
+	* Добавляет асинхронные обработчики событий
+	* Функция возвращает метод, который отображает разметку текущего таба
+	*/
 
-	function getActiveContentTab(link) {
-			let activeTab = link.getAttribute('data-content-id')
+	function getActiveContentTab(id) {
+			let activeTab = id
 			let contentVariable = [...document.querySelectorAll('.js-content-tab')]
-			// let activeContent = contentVariable.filter((content) => content.getAttribute('data-content-id') == activeTab)[0].getAttribute('data-content-id')
+			let favoritePhotosObjects = getFavoritePhotoData(localStorage.favoritePhotos, localStorage.favoriteAlbums); // делать в момент клика на там избранное
+			let favoriteResolve =  constructHtmlFavorite(favoritePhotosObjects, favoriteHTML);
+			
 			localStorage.activeTab = activeTab
 
 			for(let hideContent of contentVariable){
 					hideContent.style.display = 'none';
 			}
+
+			favoriteResolve.then(html => {
+				setTimeout(()=>{
+					addCustomEventsHtmlSelector()
+				},1500)
+			})
 			
 			return getActiveContentHTML(activeTab)
 	}
+
+	/*
+	* Функция принимает id активного таба
+	* Функция отображает активный таб
+	* В функции задействован прелоадер для более корректного отображения запроса
+	*/
 
 	async function getActiveContentHTML(id){
 
@@ -80,6 +106,12 @@ document.addEventListener('DOMContentLoaded', function(){
 				document.getElementById('preloader').classList.remove('open');
 		},2000)
 	}
+
+	/*
+	* Основная функция fetch запросов
+	* Функция принимает API url и id запроса
+	* Функция возвращает Promise с результатом запроса
+	*/
 
 	async function getData(url, id = null){
 		let requestUrl;
@@ -97,9 +129,14 @@ document.addEventListener('DOMContentLoaded', function(){
 			}
 	}
 
-	function constructHtmlFirst(object){
-		// console.log(object);
-		for (let obj of object){
+	/*
+	* Функция первичного строения HTML во вкладке "Каталог"
+	* Функция принимает массив объектов пользователей
+	* Функция строит разметку
+	*/
+
+	function constructHtmlFirst(objectArray){
+		for (let obj of objectArray){
 			listHTML.innerHTML += 
 			`
 			<div class="content__user-item user-content ">
@@ -110,13 +147,20 @@ document.addEventListener('DOMContentLoaded', function(){
 			</div>
 			`;
 		}
-		// return listHTML;
 	}
 
-	function constructHtmlSecond(object, id, userList){
+	/*
+	* Функция вторичного строения HTML во вкладке "Каталог"
+	* Функция принимает массив объектов альбомов, id выбранного пользователя, список пользователей
+	* Функция вычисляет выбранного пользователя
+	* Функция строит разметку списка альбомов у пользователей
+	* Функция возвращает массив пользователей, по которым был произведён клик
+	*/
+
+	function constructHtmlSecond(objectArray, id, userList){
 		let currentUser = [...userList].filter((elem) => elem.getAttribute('data-user-id') == id)[0].closest('.content__user-item').querySelector('.js-album-list');
 
-		for (let obj of object){
+		for (let obj of objectArray){
 			currentUser.innerHTML += 
 			`
 			<div class="user-content__album-item" >
@@ -133,11 +177,20 @@ document.addEventListener('DOMContentLoaded', function(){
 
 	}
 
-	function constructHtmlThird(object, id, albumList){
+	/*
+	* Функция третестепенного строения HTML во вкладке "Каталог"
+	* Функция принимает массив объектов фотографий, id выбранного альбома, список альбомов
+	* Функция вычисляет выбранный альбом
+	* Функция строит разметку списка фотографий в альбоме
+	* Функция возвращает массив альбомов, по которым был произведён клик
+	* В функции задействован прелоадер для более корректного отображения запроса
+	*/
+
+	function constructHtmlThird(objectArray, id, albumList){
 		
 		document.getElementById('preloader').classList.add('open');
 		let currentAlbum = [...albumList].filter((elem) => elem.getAttribute('data-album-id') == id)[0].closest('.user-content__album-item').querySelector('.js-photo-list');
-		for (let obj of object){
+		for (let obj of objectArray){
 			let favorite = (favoritePhotos.indexOf(obj.id.toString()) !== -1) ? ' active' : '';
 			currentAlbum.innerHTML += 
 			`
@@ -199,27 +252,50 @@ document.addEventListener('DOMContentLoaded', function(){
 		return opensPhotos;
 	}
 
+	/*
+	* Вспомогательная функция
+	* Функция принимает массив 
+	* Функция возвращает массив уникальных значений
+	*/
+
 	function uniqueArray(array) {
 		return Array.from(new Set(array));
 	}
+
+	/*
+	* Функция получений фотографий,добавленных в избранное
+	* Функция принимает массив id фотографий и альбомов
+	* Функция делает запрос ко всем альбомам 
+	* Функция сравнивает полученный результат с id фотографий в LocalStorage
+	* Функция приводит массив к массиву уникальных значений
+	* Функция возвращает массив объектов избранных фотографий
+	*/
 
 	async function getFavoritePhotoData(localPhotos, localAlbums) {
 
 		let arrayPhotos = localPhotos.split('|').filter((photo) => photo != '');
 		let arrayAlbums = uniqueArray(localAlbums.split(',').filter((album) => album != ''));
-		let faviritePhotos = [];
+		let favoritePhotos = [];
 
 		for (let album of arrayAlbums){
 			let favoriteAlumnsList = await getData(photosUrl,album);
 			let tmp_result = await favoriteAlumnsList.filter((photo) => arrayPhotos.indexOf(photo.id.toString()) !== -1)
-			faviritePhotos.push(...tmp_result);
+			favoritePhotos.push(...tmp_result);
 		}
-
-		return faviritePhotos;
+		favoritePhotos = uniqueArray(favoritePhotos);
+		return favoritePhotos;
 	}
 
-	function constructHtmlFavorite(array, selector){
-		array.then(result => {
+	/*
+	* Функция строения HTML во вкладке "Избранное"
+	* Функция принимает Promise с значениями избранных фотографий и селектор для добавления разметки
+	* Функция строит разметку списка избранных фотографий
+	* Функция возвращает Promise результата построения разметки
+	*/
+
+	function constructHtmlFavorite(promise, selector){
+		promise.then(result => {
+			selector.innerHTML = '';
 			if(result.length > 0){
 				for (let obj of result){
 					let favorite = (favoritePhotos.indexOf(obj.id.toString()) !== -1) ? ' active' : '';
@@ -290,6 +366,12 @@ document.addEventListener('DOMContentLoaded', function(){
 		return result
 	}
 
+	/*
+	* Функция деструкции HTML во вкладке "Каталог"
+	* Функция принимает id выбранного пользователя/альбома, список пользователей/альбомов, тип поля(пользователь/альбом)
+	* Функция удаляет разметку списка пользователей/альбомов в зависимости от выбранного типа
+	*/
+
 	function desctructHtml (id, array, type) {
 
 		switch (type) {
@@ -307,6 +389,10 @@ document.addEventListener('DOMContentLoaded', function(){
 				break; 
 		}
 	}
+
+	/*
+	* Функция добавления асинхронных обработчиков событий для lightBox и функционала избранного
+	*/
 
 	async function addCustomEventsHtmlSelector() {
 
@@ -330,6 +416,13 @@ document.addEventListener('DOMContentLoaded', function(){
 		})
 	}
 
+
+	/*
+	* Функция для отображения LightBox(Модалки с фотографией и именем фото)
+	* Функция принимает url на развёрнутую фотография и заголовок фотографии
+	* Функция  отображает иодальное окно с полученными данными
+	*/
+
 	async function showLightBox (url,title){
 		try{
 			await lightBoxModal.classList.add('open');
@@ -341,6 +434,14 @@ document.addEventListener('DOMContentLoaded', function(){
 			console.log(error);
 		}
 	}
+
+	/*
+	* Функция добавления/удаления фотографии в избранное
+	* Функция текущий элемент, по которому был совершён клик
+	* Функция определяет есть ли данное изображение в избранном
+	* В зависимости от наличия изображения в избранном - добавляет/удаляет в/из него
+	* Функция возвращает функцию, которая получает данные о избранных изображениях
+	*/
 
 	async function addToFavorite(element) {
 
@@ -354,8 +455,8 @@ document.addEventListener('DOMContentLoaded', function(){
 
 		let photoId = element.closest('.js-add-to-favorite').getAttribute('data-photo-id');
 		let albumId = element.closest('.js-add-to-favorite').getAttribute('data-album-id');
-		// console.log(albumId);
 		let tmp_array = localStorage.favoritePhotos.split('|');
+
 		tmp_array = tmp_array.filter((photo) => photo != '');
 
 		if(tmp_array.indexOf(photoId.toString()) !== -1){
@@ -370,15 +471,13 @@ document.addEventListener('DOMContentLoaded', function(){
 				localStorage.favoritePhotos = '';
 			}
 			
-
 		}else{
 			localStorage.favoritePhotos += photoId + '|';
 			localStorage.favoriteAlbums += albumId + ',';
-
 		}
 
 		return getFavoritePhotoData(localStorage.favoritePhotos, localStorage.favoriteAlbums);
-		// return result;
+
 	}
 
 
@@ -391,11 +490,13 @@ document.addEventListener('DOMContentLoaded', function(){
 			})
 	});
 
+ /* Ассинхронный код построения структуры пользователей --> Альбомов --> Фотографий */
 
 	users.then((resultUser) => {
 
 		let usersList = document.querySelectorAll('.js-user-click');
 
+		// TODO:  Обработчик кликов по пользователям
 		usersList.forEach((val,idx) => {
 			val.addEventListener('click', function(){
 				this.classList.toggle('open');
@@ -410,6 +511,7 @@ document.addEventListener('DOMContentLoaded', function(){
 						}else{
 							desctructHtml(id, [...usersList], 'users');
 						}
+
 					})
 				})
 
@@ -417,6 +519,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
 					let albumList = document.querySelectorAll('.js-album-click');
 
+					// TODO:  Обработчик кликов по альбомам
 					albumList.forEach((val,idx) => {
 						val.addEventListener('click', function(){
 							this.classList.toggle('open');
@@ -434,13 +537,18 @@ document.addEventListener('DOMContentLoaded', function(){
 									}
 								})
 							})
+
+							// TODO:  После построения разметки добавляем ассинхронные обработчики
 							photos.then((resolve4) => {
 								addCustomEventsHtmlSelector()
 							})
+
 						})
 					})
 				})
+
 			})
 		})
 	})
+
 });
